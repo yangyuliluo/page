@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档上传与管理系统</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-right: 20px;
+            color: #333;
+        }
+        .tab.active {
+            color: #5E5CEA;
+            border-bottom: 2px solid #5E5CEA;
+        }
+        /* 列表页面样式 */
+        .list-page {
+            display: block;
+        }
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .search-input {
+            width: 100%;
+            max-width: 370px;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 0 15px 0 40px;
+            font-size: 14px;
+            outline: none;
+        }
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        .filter-section {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .filter-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .filter-label {
+            width: 80px;
+            flex-shrink: 0;
+            color: #666;
+        }
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            flex-grow: 1;
+        }
+        .filter-option {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .filter-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            margin-right: 5px;
+            position: relative;
+        }
+        .filter-checkbox.checked {
+            background-color: #5E5CEA;
+            border-color: #5E5CEA;
+        }
+        .filter-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 12px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .date-filter {
+            display: flex;
+            align-items: center;
+        }
+        .date-option {
+            padding: 6px 15px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .date-option.active {
+            background-color: #5E5CEA;
+            color: white;
+            border-color: #5E5CEA;
+        }
+        .date-input-group {
+            display: flex;
+            align-items: center;
+        }
+        .date-input {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 140px;
+        }
+        .date-separator {
+            margin: 0 10px;
+            color: #999;
+        }
+        .filter-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .filter-action {
+            padding: 5px 15px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .filter-reset {
+            color: #333;
+            background-color: transparent;
+            border: none;
+        }
+        .filter-collapse {
+            color: #5E5CEA;
+            background-color: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+        }
+        .collapse-icon {
+            margin-left: 5px;
+        }
+        .upload-btn {
+            padding: 10px 20px;
+            background-color: #5E5CEA;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            float: right;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .docs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .docs-table th {
+            background-color: #f5f5f5;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: normal;
+            color: #666;
+            border-bottom: 1px solid #eee;
+        }
+        .docs-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .doc-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        .doc-title {
+            color: #333;
+            text-decoration: none;
+        }
+        .ai-icon {
+            color: #5E5CEA;
+            cursor: pointer;
+        }
+        .fav-icon {
+            color: #ddd;
+            cursor: pointer;
+        }
+        .fav-icon.active {
+            color: #FFCC00;
+        }
+        .action-btn {
+            padding: 8px 15px;
+            border-radius: 4px;
+            background-color: #5E5CEA;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 5px;
+            font-size: 13px;
+        }
+        .action-link {
+            color: #666;
+            text-decoration: none;
+            margin-left: 10px;
+            font-size: 13px;
+        }
+        .action-link:hover {
+            color: #5E5CEA;
+        }
+        
+        /* 上传页面样式 */
+        .upload-page {
+            display: none;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .form-label {
+            width: 100px;
+            text-align: right;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .required::before {
+            content: '*';
+            color: #f56c6c;
+            margin-right: 4px;
+        }
+        .form-control {
+            flex: 1;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 0 15px;
+            color: #333;
+            background-color: #fff;
+            position: relative;
+        }
+        .form-select {
+            width: 100%;
+            height: 100%;
+            appearance: none;
+            border: none;
+            background: transparent;
+            padding-right: 30px;
+            cursor: pointer;
+            color: #999;
+        }
+        .form-control::after {
+            content: '';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid #999;
+        }
+        .form-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            color: #333;
+        }
+        .form-input::placeholder {
+            color: #999;
+        }
+        .radio-group {
+            display: flex;
+            align-items: center;
+        }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        .radio-circle {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            margin-right: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .radio-circle.active {
+            border-color: #5E5CEA;
+        }
+        .radio-circle.active::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #5E5CEA;
+        }
+        .upload-area {
+            border: 1px dashed #ddd;
+            padding: 40px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            position: relative;
+        }
+        .upload-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #5E5CEA;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            margin: 0 auto 15px;
+            font-size: 24px;
+        }
+        .upload-text {
+            color: #5E5CEA;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .upload-subtext {
+            color: #999;
+            font-size: 12px;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 25px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        .btn-primary {
+            background-color: #5E5CEA;
+            color: white;
+            border: none;
+        }
+        .btn-default {
+            background-color: white;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        .file-list {
+            margin-top: 15px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: #f5f5f5;
+        }
+        .file-icon {
+            margin-right: 10px;
+            color: #5E5CEA;
+        }
+        .file-name {
+            flex-grow: 1;
+            font-size: 14px;
+        }
+        .file-tag {
+            background-color: #e6f7ff;
+            color: #1890ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        .file-remove {
+            color: #f56c6c;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .visibility-options .radio-option:first-child .radio-circle {
+            background-color: #5E5CEA;
+            border-color: #5E5CEA;
+        }
+        .visibility-options .radio-option:first-child .radio-circle::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: white;
+        }
+        /* 文档标签样式 */
+        .doc-tag {
+            display: inline-block;
+            background-color: #e6f7ff;
+            color: #1890ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 3px;
+        }
+        
+        /* 重要标签 */
+        .doc-tag[data-tag="重要"] {
+            background-color: #fff1f0;
+            color: #f5222d;
+        }
+        
+        /* 紧急标签 */
+        .doc-tag[data-tag="紧急"] {
+            background-color: #fff7e6;
+            color: #fa8c16;
+        }
+        
+        /* 参考标签 */
+        .doc-tag[data-tag="参考"] {
+            background-color: #e6fffb;
+            color: #13c2c2;
+        }
+        
+        /* 学习标签 */
+        .doc-tag[data-tag="学习"] {
+            background-color: #f6ffed;
+            color: #52c41a;
+        }
+        
+        /* 归档标签 */
+        .doc-tag[data-tag="归档"] {
+            background-color: #f9f0ff;
+            color: #722ed1;
+        }
+        
+        /* 标签添加按钮 */
+        .tag-add {
+            display: inline-block;
+            border: 1px dashed #d9d9d9;
+            border-radius: 4px;
+            padding: 0 8px;
+            color: #999;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .tag-add:hover {
+            color: #1890ff;
+            border-color: #1890ff;
+        }
+        
+        /* 标签下拉菜单样式 */
+        .tag-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tag-btn {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        
+        .tag-btn:hover {
+            background-color: #e8e8e8;
+        }
+        
+        .tag-btn-icon {
+            margin-right: 6px;
+        }
+        
+        .tag-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            z-index: 10;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .tag-dropdown-content.show {
+            display: block;
+        }
+        
+        .tag-dropdown-header {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+        }
+        
+        .tag-dropdown-input {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .tag-dropdown-input input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .tag-dropdown-list {
+            padding: 5px 0;
+        }
+        
+        .tag-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        
+        .tag-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .tag-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .tag-badge {
+            background-color: #f0f0f0;
+            color: #666;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 12px;
+            margin-left: auto;
+        }
+        
+        /* 文档标签调整 */
+        .doc-tags {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .doc-tag {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e6f7ff;
+            color: #1890ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .tag-add-btn {
+            border: 1px dashed #d9d9d9;
+            color: #999;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            background: none;
+            cursor: pointer;
+        }
+        
+        .tag-add-btn:hover {
+            color: #1890ff;
+            border-color: #1890ff;
+        }
+        
+        /* 列布局平齐调整 */
+        .docs-table th, .docs-table td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+        
+        .docs-table th:nth-child(1), .docs-table td:nth-child(1) {
+            max-width: 250px;
+        }
+        
+        .docs-table th:nth-child(5), .docs-table td:nth-child(5) {
+            max-width: 150px;
+        }
+        
+        /* 标签叉叉样式 */
+        .doc-tag {
+            position: relative;
+            padding-right: 20px;
+        }
+        
+        .tag-close {
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            font-size: 10px;
+            color: rgba(0, 0, 0, 0.45);
+            cursor: pointer;
+        }
+        
+        .tag-close:hover {
+            color: rgba(0, 0, 0, 0.85);
+        }
+        
+        /* 勾选框样式 */
+        .checkbox-column {
+            width: 40px;
+        }
+        
+        .batch-actions {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .select-all-container {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        
+        .doc-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            margin-right: 8px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .doc-checkbox.checked {
+            background-color: #5E5CEA;
+            border-color: #5E5CEA;
+        }
+        
+        .doc-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 12px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .batch-btn {
+            padding: 6px 12px;
+            background-color: #5E5CEA;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-right: 10px;
+        }
+        
+        .batch-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active">行业报告</div>
+            <div class="tab">常用网址</div>
+            <div class="tab">我的收藏</div>
+        </div>
+        
+        <!-- 列表页面 -->
+        <div class="list-page" id="list-page">
+            <div class="search-box">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <input type="text" class="search-input" placeholder="请输入关键词进行检索">
+                    <div class="search-icon">🔍</div>
+                    <button class="upload-btn" id="show-upload-btn">上传报告</button>
+                </div>
+                
+                <!-- 标签快速筛选区域 -->
+                <div class="quick-tags" style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <div style="margin-right: 10px; color: #666; white-space: nowrap;">快速筛选:</div>
+                    <div class="tag-dropdown">
+                        <button class="tag-btn" style="padding: 4px 10px;">
+                            <span class="tag-btn-icon">+</span>
+                            <span>筛选标签</span>
+                        </button>
+                    </div>
+                    <div id="selectedTags" class="selected-tags" style="margin-left: 10px; display: flex; flex-wrap: wrap; gap: 5px;">
+                        <!-- 已选标签会显示在这里 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-label">报告类型</div>
+                    <div class="filter-options">
+                        <div class="filter-option">
+                            <div class="filter-checkbox checked"></div>
+                            <span>行业研究</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>海外市场研究</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>业务策略研究</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>用户洞察&研究</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>其他</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>交接文档</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>政策法规</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-row">
+                    <div class="filter-label">业务线类型</div>
+                    <div class="filter-options">
+                        <div class="filter-option">
+                            <div class="filter-checkbox checked"></div>
+                            <span>平台</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>出行</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>酒店</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>旅游度假</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>其他</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-row">
+                    <div class="filter-label">地区</div>
+                    <div class="filter-options">
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>东亚</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>东南亚</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>欧洲</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>北美</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>拉美</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>中东</span>
+                        </div>
+                        <div class="filter-option">
+                            <div class="filter-checkbox"></div>
+                            <span>其他</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-row">
+                    <div class="filter-label">发布时间</div>
+                    <div class="date-filter">
+                        <div class="date-option active">近三天</div>
+                        <div class="date-option">近一周</div>
+                        <div class="date-option">近一月</div>
+                        <div class="date-option">近一年</div>
+                        <div class="date-input-group">
+                            <input type="date" class="date-input" placeholder="开始日期">
+                            <span class="date-separator">-</span>
+                            <input type="date" class="date-input" placeholder="结束日期">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button class="filter-reset">重置</button>
+                    <button class="filter-collapse">
+                        折叠
+                        <span class="collapse-icon">▼</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 在筛选区域结束后，表格前添加批量操作区域 -->
+            <div class="batch-actions">
+                <div class="select-all-container">
+                    <div class="doc-checkbox" id="selectAll"></div>
+                    <span>全选</span>
+                </div>
+                <button class="batch-btn" id="syncToKnowledgeBtn" disabled>同步到知识库问答</button>
+            </div>
+            
+            <table class="docs-table">
+                <thead>
+                    <tr>
+                        <th class="checkbox-column"></th>
+                        <th>标题</th>
+                        <th>文件大小</th>
+                        <th>发布者</th>
+                        <th>发布时间</th>
+                        <th>标签</th>
+                        <th>AI观点</th>
+                        <th>收藏</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="checkbox-column">
+                            <div class="doc-checkbox"></div>
+                        </td>
+                        <td>
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iI2VkNmI3NSIgY2xhc3M9ImJpIGJpLWZpbGUtcGRmLWZpbGwiIHZpZXdCb3g9IjAgMCAxNiAxNiI+CiAgPHBhdGggZD0iTTguNSA2LjVhLjUuNSAwIDAgMC0xIDB2My43OTNMNi4xNDYgOC4xNDZhLjUuNSAwIDEgMC0uNzA4LjcwOGwzIDNhLjUuNSAwIDAgMCAuNzA4IDBsMy0zYS41LjUgMCAwIDAtLjcwOC0uNzA4TDcuNSAxMC4yOTNWNi41eiIvPgogIDxwYXRoIGQ9Ik00IDBhMiAyIDAgMCAwLTIgMnYxMmEyIDIgMCAwIDAgMiAyaDhBMi0zIDAgMCAwIDE0IDE0VjIgMSAwIDAgMCAxMiAwIDMtNGMwIDAgMTMtNHoiLz4KPC9zdmc+" alt="PDF" class="doc-icon">
+                            <a href="#" class="doc-title">国家税务总局江苏省税务局文件</a>
+                        </td>
+                        <td>111.42KB</td>
+                        <td>任伟-1048064</td>
+                        <td>2025-03-31 14:41:10</td>
+                        <td class="doc-tags-cell">
+                            <div class="doc-tags">
+                                <span class="doc-tag" data-tag="重要">重要</span>
+                                <button class="tag-add-btn" data-row-id="1">+</button>
+                            </div>
+                        </td>
+                        <td><span class="ai-icon">🔄</span></td>
+                        <td><span class="fav-icon">★</span></td>
+                        <td>
+                            <button class="action-btn">下载</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="checkbox-column">
+                            <div class="doc-checkbox"></div>
+                        </td>
+                        <td>
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iI2VkNmI3NSIgY2xhc3M9ImJpIGJpLWZpbGUtcGRmLWZpbGwiIHZpZXdCb3g9IjAgMCAxNiAxNiI+CiAgPHBhdGggZD0iTTguNSA2LjVhLjUuNSAwIDAgMC0xIDB2My43OTNMNi4xNDYgOC4xNDZhLjUuNSAwIDEgMC0uNzA4LjcwOGwzIDNhLjUuNSAwIDAgMCAuNzA4IDBsMy0zYS41LjUgMCAwIDAtLjcwOC0uNzA4TDcuNSAxMC4yOTNWNi41eiIvPgogIDxwYXRoIGQ9Ik00IDBhMiAyIDAgMCAwLTIgMnYxMmEyIDIgMCAwIDAgMiAyaDhBMi0zIDAgMCAwIDE0IDE0VjIgMSAwIDAgMCAxMiAwIDMtNGMwIDAgMTMtNHoiLz4KPC9zdmc+" alt="PDF" class="doc-icon">
+                            <a href="#" class="doc-title">FJ9740849529145425</a>
+                        </td>
+                        <td>43.07MB</td>
+                        <td>杨柳-1215287</td>
+                        <td>2025-03-27 22:08:48</td>
+                        <td class="doc-tags-cell">
+                            <div class="doc-tags">
+                                <span class="doc-tag" data-tag="养老">紧急</span>
+                                <button class="tag-add-btn" data-row-id="2">+</button>
+                            </div>
+                        </td>
+                        <td><span class="ai-icon">🔄</span></td>
+                        <td><span class="fav-icon">★</span></td>
+                        <td>
+                            <button class="action-btn">下载</button>
+                            <a href="#" class="action-link">编辑</a>
+                            <a href="#" class="action-link">删除</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="checkbox-column">
+                            <div class="doc-checkbox"></div>
+                        </td>
+                        <td>
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iI2VkNmI3NSIgY2xhc3M9ImJpIGJpLWZpbGUtcGRmLWZpbGwiIHZpZXdCb3g9IjAgMCAxNiAxNiI+CiAgPHBhdGggZD0iTTguNSA2LjVhLjUuNSAwIDAgMC0xIDB2My43OTNMNi4xNDYgOC4xNDZhLjUuNSAwIDEgMC0uNzA4LjcwOGwzIDNhLjUuNSAwIDAgMCAuNzA4IDBsMy0zYS41LjUgMCAwIDAtLjcwOC0uNzA4TDcuNSAxMC4yOTNWNi41eiIvPgogIDxwYXRoIGQ9Ik00IDBhMiAyIDAgMCAwLTIgMnYxMmEyIDIgMCAwIDAgMiAyaDhBMi0zIDAgMCAwIDE0IDE0VjIgMSAwIDAgMCAxMiAwIDMtNGMwIDAgMTMtNHoiLz4KPC9zdmc+" alt="PDF" class="doc-icon">
+                            <a href="#" class="doc-title">FJ9740849529145425</a>
+                        </td>
+                        <td>43.07MB</td>
+                        <td>杨柳-1215287</td>
+                        <td>2025-03-27 22:08:48</td>
+                        <td class="doc-tags-cell">
+                            <div class="doc-tags">
+                                <span class="doc-tag" data-tag="政策">税务</span>
+                                <button class="tag-add-btn" data-row-id="2">+</button>
+                            </div>
+                        </td>
+                        <td><span class="ai-icon">🔄</span></td>
+                        <td><span class="fav-icon">★</span></td>
+                        <td>
+                            <button class="action-btn">下载</button>
+                            <a href="#" class="action-link">编辑</a>
+                            <a href="#" class="action-link">删除</a>
+                        </td>
+                    </tr>    
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 上传页面 -->
+        <div class="upload-page" id="upload-page">
+            <h2 style="margin-bottom: 20px;">上传报告</h2>
+            
+            <div class="form-content">
+                <div class="form-group">
+                    <label class="form-label required">报告类型</label>
+                    <div class="form-control">
+                        <select class="form-select">
+                            <option value="" selected disabled>请选择报告类型</option>
+                            <option value="industry">行业研究</option>
+                            <option value="overseas">海外市场研究</option>
+                            <option value="strategy">业务策略研究</option>
+                            <option value="user">用户洞察&研究</option>
+                            <option value="other">其他</option>
+                            <option value="handover">交接文档</option>
+                            <option value="policy">政策法规</option>
+                        </select>
+                    </div>
+                    
+                    <label class="form-label" style="margin-left: 20px;">业务线</label>
+                    <div class="form-control">
+                        <select class="form-select">
+                            <option value="" selected disabled>请选择业务线</option>
+                            <option value="platform">平台</option>
+                            <option value="travel">出行</option>
+                            <option value="hotel">酒店</option>
+                            <option value="vacation">旅游度假</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">地区</label>
+                    <div class="form-control">
+                        <select class="form-select">
+                            <option value="" selected disabled>请选择地区</option>
+                            <option value="eastasia">东亚</option>
+                            <option value="southeastasia">东南亚</option>
+                            <option value="europe">欧洲</option>
+                            <option value="northamerica">北美</option>
+                            <option value="latinamerica">拉美</option>
+                            <option value="middleeast">中东</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    
+                    <label class="form-label" style="margin-left: 20px;">标题</label>
+                    <div class="form-control">
+                        <input type="text" class="form-input" placeholder="默认为文件名称">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label required">AI观点</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <div class="radio-circle"></div>
+                            <span>是</span>
+                        </div>
+                        <div class="radio-option">
+                            <div class="radio-circle"></div>
+                            <span>否</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label required">可见人员</label>
+                    <div class="radio-group visibility-options">
+                        <div class="radio-option">
+                            <div class="radio-circle active"></div>
+                            <span>自己</span>
+                        </div>
+                        <div class="radio-option">
+                            <div class="radio-circle"></div>
+                            <span>部分人</span>
+                        </div>
+                        <div class="radio-option">
+                            <div class="radio-circle"></div>
+                            <span>公开</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">标签</label>
+                    <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                        <div class="tag-dropdown" style="margin-bottom: 5px;">
+                            <button class="tag-btn upload-tag-btn" style="padding: 4px 10px;">
+                                <span class="tag-btn-icon">+</span>
+                                <span>添加标签</span>
+                            </button>
+                        </div>
+                        <div id="uploadSelectedTags" class="selected-tags" style="display: flex; flex-wrap: wrap; gap: 5px;">
+                            <!-- 已添加的标签会显示在这里 -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">↑</div>
+                    <span class="upload-text">点击或者拖动文件到该区域上传</span>
+                    <span class="upload-subtext">支持上传: doc、docx、pdf</span>
+                    <input type="file" id="file-input" multiple style="display:none;">
+                </div>
+                
+                <div class="file-list" id="file-list">
+                    <!-- 上传的文件将在这里显示 -->
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="save-btn">保存</button>
+                    <button class="btn btn-default" id="cancel-btn">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加标签下拉菜单 -->
+    <div id="tagDropdown" class="tag-dropdown-content">
+        <div class="tag-dropdown-header">选择标签</div>
+        <div class="tag-dropdown-input">
+            <input type="text" id="tagInput" placeholder="输入标签名..." autocomplete="off">
+        </div>
+        <div class="tag-dropdown-list">
+            <div class="tag-item" data-tag="出行">
+                <div class="tag-icon">🚗</div>
+                <span>出行</span>
+                <span class="tag-badge">2</span>
+            </div>
+            <div class="tag-item" data-tag="会">
+                <div class="tag-icon">🐵</div>
+                <span>会</span>
+                <span class="tag-badge"></span>
+            </div>
+            <div class="tag-item" data-tag="签证">
+                <div class="tag-icon">🎯</div>
+                <span>签证</span>
+                <span class="tag-badge"></span>
+            </div>
+            <div class="tag-item" data-tag="养老">
+                <div class="tag-icon">👴</div>
+                <span>养老</span>
+                <span class="tag-badge"></span>
+            </div>
+            <div class="tag-item" data-tag="旅游">
+                <div class="tag-icon">🏖️</div>
+                <span>旅游</span>
+                <span class="tag-badge"></span>
+            </div>
+            <div class="tag-item" data-tag="重要">
+                <div class="tag-icon">⭐</div>
+                <span>重要</span>
+                <span class="tag-badge">1</span>
+            </div>
+            <div class="tag-item" data-tag="紧急">
+                <div class="tag-icon">🔥</div>
+                <span>紧急</span>
+                <span class="tag-badge">1</span>
+            </div>
+            <div class="tag-item" data-tag="参考">
+                <div class="tag-icon">📖</div>
+                <span>参考</span>
+                <span class="tag-badge">1</span>
+            </div>
+            <div class="tag-item" data-tag="学习">
+                <div class="tag-icon">📚</div>
+                <span>学习</span>
+                <span class="tag-badge"></span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 页面切换控制
+            const listPage = document.getElementById('list-page');
+            const uploadPage = document.getElementById('upload-page');
+            const showUploadBtn = document.getElementById('show-upload-btn');
+            const saveBtn = document.getElementById('save-btn');
+            const cancelBtn = document.getElementById('cancel-btn');
+            
+            // 默认显示列表页面
+            listPage.style.display = 'block';
+            uploadPage.style.display = 'none';
+            
+            // 显示上传页面
+            showUploadBtn.addEventListener('click', function() {
+                listPage.style.display = 'none';
+                uploadPage.style.display = 'block';
+            });
+            
+            // 保存按钮 - 返回列表页面
+            saveBtn.addEventListener('click', function() {
+                // 表单验证
+                const reportType = document.querySelector('.form-select');
+                if (reportType.selectedIndex === 0) {
+                    alert('请选择报告类型');
+                    return;
+                }
+                
+                // 收集上传页面的全局标签
+                const globalTags = Array.from(uploadSelectedTagsContainer.querySelectorAll('.doc-tag'))
+                    .map(tag => tag.textContent.trim());
+                    
+                // 收集每个文件的标签
+                const fileItems = document.querySelectorAll('.file-item');
+                const filesWithTags = [];
+                
+                fileItems.forEach((item, index) => {
+                    const fileName = item.querySelector('.file-name').textContent;
+                    const fileTags = Array.from(item.querySelectorAll('.doc-tag'))
+                        .map(tag => tag.textContent.trim());
+                    
+                    // 合并全局标签和文件特有标签
+                    const allTags = [...new Set([...globalTags, ...fileTags])];
+                    
+                    filesWithTags.push({
+                        fileName: fileName,
+                        tags: allTags
+                    });
+                });
+                
+                // 这里可以添加实际的表单提交逻辑，包括文件与标签的关联
+                console.log('文件与标签:', filesWithTags);
+                alert('文档已保存');
+                
+                listPage.style.display = 'block';
+                uploadPage.style.display = 'none';
+                // 清空上传列表
+                document.getElementById('file-list').innerHTML = '';
+                // 清空全局标签
+                uploadSelectedTagsContainer.innerHTML = '';
+            });
+            
+            // 取消按钮 - 返回列表页面
+            cancelBtn.addEventListener('click', function() {
+                if (confirm('确定要取消上传吗？')) {
+                    listPage.style.display = 'block';
+                    uploadPage.style.display = 'none';
+                    // 清空上传列表
+                    document.getElementById('file-list').innerHTML = '';
+                }
+            });
+            
+            // 选项卡切换
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // 单选框交互
+            const radioOptions = document.querySelectorAll('.radio-option');
+            radioOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const parentGroup = this.closest('.radio-group');
+                    parentGroup.querySelectorAll('.radio-circle').forEach(circle => {
+                        circle.classList.remove('active');
+                    });
+                    this.querySelector('.radio-circle').classList.add('active');
+                });
+            });
+            
+            // 筛选选项交互
+            const filterOptions = document.querySelectorAll('.filter-option');
+            filterOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const checkbox = this.querySelector('.filter-checkbox');
+                    checkbox.classList.toggle('checked');
+                });
+            });
+            
+            // 日期选项交互
+            const dateOptions = document.querySelectorAll('.date-option');
+            dateOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    dateOptions.forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // 折叠筛选项
+            const collapseBtn = document.querySelector('.filter-collapse');
+            const filterSection = document.querySelector('.filter-section');
+            const collapseIcon = document.querySelector('.collapse-icon');
+            let collapsed = false;
+            
+            collapseBtn.addEventListener('click', function() {
+                collapsed = !collapsed;
+                if (collapsed) {
+                    filterSection.style.height = '60px';
+                    filterSection.style.overflow = 'hidden';
+                    collapseIcon.textContent = '▲';
+                    collapseBtn.textContent = '展开 ';
+                    collapseBtn.appendChild(collapseIcon);
+                } else {
+                    filterSection.style.height = 'auto';
+                    filterSection.style.overflow = 'visible';
+                    collapseIcon.textContent = '▼';
+                    collapseBtn.textContent = '折叠 ';
+                    collapseBtn.appendChild(collapseIcon);
+                }
+            });
+            
+            // 重置筛选项
+            const resetBtn = document.querySelector('.filter-reset');
+            resetBtn.addEventListener('click', function() {
+                filterOptions.forEach(option => {
+                    option.querySelector('.filter-checkbox').classList.remove('checked');
+                });
+                dateOptions.forEach(o => o.classList.remove('active'));
+                dateOptions[0].classList.add('active');
+                document.querySelectorAll('.date-input').forEach(input => {
+                    input.value = '';
+                });
+            });
+            
+            // 收藏交互
+            const favIcons = document.querySelectorAll('.fav-icon');
+            favIcons.forEach(icon => {
+                icon.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                });
+            });
+            
+            // 文件上传
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const fileList = document.getElementById('file-list');
+            
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.style.borderColor = '#5E5CEA';
+                this.style.backgroundColor = '#f0f7ff';
+            });
+            
+            uploadArea.addEventListener('dragleave', function() {
+                this.style.borderColor = '#ddd';
+                this.style.backgroundColor = '#f9f9f9';
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.style.borderColor = '#ddd';
+                this.style.backgroundColor = '#f9f9f9';
+                
+                if (e.dataTransfer.files.length > 0) {
+                    handleFiles(e.dataTransfer.files);
+                }
+            });
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    handleFiles(this.files);
+                }
+            });
+            
+            // 修改上传页面添加标签功能
+            const uploadTagBtn = document.querySelector('.upload-tag-btn');
+            const uploadSelectedTagsContainer = document.getElementById('uploadSelectedTags');
+            
+            uploadTagBtn.addEventListener('click', function() {
+                // 复制标签下拉菜单
+                const uploadTagDropdown = tagDropdown.cloneNode(true);
+                uploadTagDropdown.id = 'uploadTagDropdown';
+                
+                // 定位上传页面标签下拉菜单
+                const rect = this.getBoundingClientRect();
+                uploadTagDropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+                uploadTagDropdown.style.left = (rect.left + window.scrollX) + 'px';
+                uploadTagDropdown.classList.add('show');
+                
+                // 添加到页面
+                document.body.appendChild(uploadTagDropdown);
+                
+                // 监听标签点击事件
+                const uploadTagItems = uploadTagDropdown.querySelectorAll('.tag-item');
+                uploadTagItems.forEach(item => {
+                    item.addEventListener('click', function() {
+                        // 添加到已选标签
+                        addUploadTag(this.dataset.tag);
+                        uploadTagDropdown.remove();
+                    });
+                });
+                
+                // 监听输入框回车事件
+                const uploadTagInput = uploadTagDropdown.querySelector('.tag-dropdown-input input');
+                uploadTagInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && this.value.trim() !== '') {
+                        addUploadTag(this.value.trim());
+                        uploadTagDropdown.remove();
+                    }
+                });
+                
+                // 点击其他地方关闭上传标签下拉菜单
+                const closeUploadTagDropdown = function(e) {
+                    if (!uploadTagDropdown.contains(e.target) && e.target !== uploadTagBtn) {
+                        uploadTagDropdown.remove();
+                        document.removeEventListener('click', closeUploadTagDropdown);
+                    }
+                };
+                
+                // 使用setTimeout确保本次点击不会立即关闭
+                setTimeout(() => {
+                    document.addEventListener('click', closeUploadTagDropdown);
+                }, 0);
+                
+                // 聚焦输入框
+                setTimeout(() => uploadTagInput.focus(), 100);
+            });
+            
+            // 添加上传页面标签
+            function addUploadTag(tagText) {
+                // 检查是否已存在相同标签
+                const existingTags = Array.from(uploadSelectedTagsContainer.querySelectorAll('.doc-tag'))
+                    .map(tag => tag.getAttribute('data-original-tag') || tag.textContent.trim());
+                
+                if (existingTags.includes(tagText)) {
+                    return;
+                }
+                
+                // 创建带关闭按钮的标签
+                createTagWithClose(tagText, uploadSelectedTagsContainer);
+            }
+            
+            // 修改文件上传处理函数，替换现有的标签输入方式
+            function handleFiles(files) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    
+                    // 检查文件类型
+                    if (['doc', 'docx', 'pdf'].indexOf(ext) === -1) {
+                        alert('请上传 doc、docx 或 pdf 格式的文件');
+                        continue;
+                    }
+                    
+                    // 创建文件条目
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    
+                    // 文件图标
+                    const fileIcon = document.createElement('div');
+                    fileIcon.className = 'file-icon';
+                    fileIcon.innerHTML = '📄';
+                    
+                    // 文件名称
+                    const fileName = document.createElement('div');
+                    fileName.className = 'file-name';
+                    fileName.textContent = file.name;
+                    
+                    // 添加标签容器
+                    const tagContainer = document.createElement('div');
+                    tagContainer.className = 'file-tags';
+                    tagContainer.style.display = 'flex';
+                    tagContainer.style.flexWrap = 'wrap';
+                    tagContainer.style.gap = '5px';
+                    tagContainer.style.alignItems = 'center';
+                    tagContainer.style.marginLeft = '10px';
+                    
+                    // 添加标签按钮
+                    const addTagBtn = document.createElement('button');
+                    addTagBtn.className = 'tag-add-btn';
+                    addTagBtn.textContent = '+';
+                    addTagBtn.style.minWidth = 'auto';
+                    
+                    // 添加标签下拉功能
+                    addTagBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        
+                        // 创建文件标签下拉菜单
+                        const fileTagDropdown = tagDropdown.cloneNode(true);
+                        fileTagDropdown.id = 'fileTagDropdown';
+                        
+                        // 定位文件标签下拉菜单
+                        const rect = this.getBoundingClientRect();
+                        fileTagDropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+                        fileTagDropdown.style.left = (rect.left + window.scrollX) + 'px';
+                        fileTagDropdown.classList.add('show');
+                        
+                        // 添加到页面
+                        document.body.appendChild(fileTagDropdown);
+                        
+                        // 监听标签点击事件
+                        const fileTagItems = fileTagDropdown.querySelectorAll('.tag-item');
+                        fileTagItems.forEach(item => {
+                            item.addEventListener('click', function() {
+                                addFileTag(tagContainer, addTagBtn, this.dataset.tag);
+                                fileTagDropdown.remove();
+                            });
+                        });
+                        
+                        // 监听输入框回车事件
+                        const fileTagInput = fileTagDropdown.querySelector('.tag-dropdown-input input');
+                        fileTagInput.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter' && this.value.trim() !== '') {
+                                addFileTag(tagContainer, addTagBtn, this.value.trim());
+                                fileTagDropdown.remove();
+                            }
+                        });
+                        
+                        // 点击其他地方关闭文件标签下拉菜单
+                        const closeFileTagDropdown = function(e) {
+                            if (!fileTagDropdown.contains(e.target) && e.target !== addTagBtn) {
+                                fileTagDropdown.remove();
+                                document.removeEventListener('click', closeFileTagDropdown);
+                            }
+                        };
+                        
+                        // 使用setTimeout确保本次点击不会立即关闭
+                        setTimeout(() => {
+                            document.addEventListener('click', closeFileTagDropdown);
+                        }, 0);
+                        
+                        // 聚焦输入框
+                        setTimeout(() => fileTagInput.focus(), 100);
+                    });
+                    
+                    // 添加文件标签的函数
+                    function addFileTag(container, button, tagText) {
+                        // 检查是否已存在相同标签
+                        const existingTags = Array.from(container.querySelectorAll('.doc-tag'))
+                            .map(tag => tag.getAttribute('data-original-tag') || tag.textContent.trim());
+                        
+                        if (existingTags.includes(tagText)) {
+                            return;
+                        }
+                        
+                        // 创建带关闭按钮的标签
+                        createTagWithClose(tagText, container, button);
+                    }
+                    
+                    // 添加标签按钮到标签容器
+                    tagContainer.appendChild(addTagBtn);
+                    
+                    // 删除按钮
+                    const removeBtn = document.createElement('div');
+                    removeBtn.className = 'file-remove';
+                    removeBtn.textContent = '×';
+                    removeBtn.addEventListener('click', function() {
+                        fileItem.remove();
+                    });
+                    
+                    // 组装文件条目
+                    fileItem.appendChild(fileIcon);
+                    fileItem.appendChild(fileName);
+                    fileItem.appendChild(tagContainer);
+                    fileItem.appendChild(removeBtn);
+                    
+                    // 添加到文件列表
+                    fileList.appendChild(fileItem);
+                }
+                
+                // 重置文件输入
+                fileInput.value = '';
+            }
+            
+            // 标签下拉菜单功能 - 首页标签选择
+            const tagBtn = document.querySelector('.tag-btn');
+            const tagDropdown = document.getElementById('tagDropdown');
+            const tagInput = document.getElementById('tagInput');
+            const selectedTagsContainer = document.getElementById('selectedTags');
+            
+            // 点击首页标签按钮显示下拉菜单
+            tagBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // 定位下拉菜单
+                const rect = this.getBoundingClientRect();
+                tagDropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+                tagDropdown.style.left = (rect.left + window.scrollX) + 'px';
+                
+                // 显示下拉菜单
+                tagDropdown.classList.add('show');
+                
+                // 聚焦输入框
+                setTimeout(() => tagInput.focus(), 100);
+            });
+            
+            // 点击其他地方关闭下拉菜单
+            document.addEventListener('click', function(e) {
+                if (!tagDropdown.contains(e.target) && e.target !== tagBtn) {
+                    tagDropdown.classList.remove('show');
+                }
+            });
+            
+            // 标签项点击事件 - 首页标签选择
+            const tagItems = document.querySelectorAll('.tag-item');
+            tagItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    addTagFilter(this.dataset.tag);
+                    tagDropdown.classList.remove('show');
+                });
+            });
+            
+            // 输入框回车事件 - 首页标签选择
+            tagInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && this.value.trim() !== '') {
+                    addTagFilter(this.value.trim());
+                    tagDropdown.classList.remove('show');
+                    this.value = '';
+                }
+            });
+            
+            // 添加标签筛选 - 首页标签筛选功能
+            function addTagFilter(tagText) {
+                // 检查是否已存在相同筛选标签
+                const existingFilters = Array.from(selectedTagsContainer.querySelectorAll('.doc-tag'))
+                    .map(tag => tag.getAttribute('data-original-tag') || tag.textContent.trim());
+                
+                if (existingFilters.includes(tagText)) {
+                    return;
+                }
+                
+                // 创建筛选标签
+                const tagEl = document.createElement('span');
+                tagEl.className = 'doc-tag';
+                tagEl.dataset.tag = tagText;
+                tagEl.setAttribute('data-original-tag', tagText);
+                tagEl.innerHTML = tagText + '<span class="tag-close">×</span>';
+                
+                // 添加移除功能
+                const closeBtn = tagEl.querySelector('.tag-close');
+                closeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    tagEl.remove();
+                    filterTableByTags();
+                });
+                
+                // 添加到已选标签容器
+                selectedTagsContainer.appendChild(tagEl);
+                
+                // 应用筛选
+                filterTableByTags();
+            }
+            
+            // 根据标签筛选表格
+            function filterTableByTags() {
+                const selectedTags = Array.from(selectedTagsContainer.querySelectorAll('.doc-tag'))
+                    .map(tag => tag.getAttribute('data-original-tag') || tag.textContent.trim());
+                
+                const rows = document.querySelectorAll('.docs-table tbody tr');
+                
+                // 如果没有选择标签，显示所有行
+                if (selectedTags.length === 0) {
+                    rows.forEach(row => row.style.display = '');
+                    return;
+                }
+                
+                // 筛选符合条件的行
+                rows.forEach(row => {
+                    const rowTags = Array.from(row.querySelectorAll('.doc-tag'))
+                        .map(tag => tag.getAttribute('data-original-tag') || tag.textContent.trim());
+                    
+                    // 如果行包含任何已选标签，显示该行
+                    const shouldShow = selectedTags.some(tag => rowTags.includes(tag));
+                    row.style.display = shouldShow ? '' : 'none';
+                });
+            }
+            
+            // 为所有"+"按钮添加点击事件 - 表格行标签添加功能
+            const tagAddButtons = document.querySelectorAll('.tag-add-btn');
+            let currentTagButton = null;
+            let currentRow = null;
+            
+            tagAddButtons.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation(); // 防止事件冒泡
+                    
+                    // 获取当前行信息
+                    currentTagButton = this;
+                    currentRow = this.closest('tr');
+                    
+                    // 创建表格行标签下拉菜单（克隆现有下拉菜单）
+                    const rowTagDropdown = tagDropdown.cloneNode(true);
+                    rowTagDropdown.id = 'rowTagDropdown';
+                    
+                    // 定位下拉菜单
+                    const rect = this.getBoundingClientRect();
+                    rowTagDropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+                    rowTagDropdown.style.left = (rect.left + window.scrollX) + 'px';
+                    rowTagDropdown.classList.add('show');
+                    
+                    // 添加到页面
+                    document.body.appendChild(rowTagDropdown);
+                    
+                    // 监听标签点击事件
+                    const rowTagItems = rowTagDropdown.querySelectorAll('.tag-item');
+                    rowTagItems.forEach(item => {
+                        item.addEventListener('click', function() {
+                            addTagToRow(this.dataset.tag, currentRow, currentTagButton);
+                            rowTagDropdown.remove();
+                        });
+                    });
+                    
+                    // 监听输入框回车事件
+                    const rowTagInput = rowTagDropdown.querySelector('.tag-dropdown-input input');
+                    rowTagInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter' && this.value.trim() !== '') {
+                            addTagToRow(this.value.trim(), currentRow, currentTagButton);
+                            rowTagDropdown.remove();
+                        }
+                    });
+                    
+                    // 点击其他地方关闭下拉菜单
+                    const closeRowTagDropdown = function(e) {
+                        if (!rowTagDropdown.contains(e.target) && e.target !== btn) {
+                            rowTagDropdown.remove();
+                            document.removeEventListener('click', closeRowTagDropdown);
+                        }
+                    };
+                    
+                    // 使用setTimeout确保本次点击不会立即关闭
+                    setTimeout(() => {
+                        document.addEventListener('click', closeRowTagDropdown);
+                    }, 0);
+                    
+                    // 聚焦输入框
+                    setTimeout(() => rowTagInput.focus(), 100);
+                });
+            });
+            
+            // 向表格行中添加标签
+            function addTagToRow(tagText, row, button) {
+                const docTags = row.querySelector('.doc-tags');
+                
+                // 检查是否已存在相同标签
+                const existingTags = Array.from(docTags.querySelectorAll('.doc-tag'))
+                    .map(tag => tag.getAttribute('data-original-tag') || tag.textContent.trim());
+                
+                if (existingTags.includes(tagText)) {
+                    alert('该标签已存在');
+                    return;
+                }
+                
+                // 创建带关闭按钮的标签
+                const tag = createTagWithClose(tagText, docTags, button);
+                
+                // 为表格中的标签添加特殊处理（点击整个标签时需要确认删除）
+                tag.addEventListener('click', function(e) {
+                    // 如果点击的是关闭按钮，不处理，让关闭按钮的事件处理
+                    if (e.target.classList.contains('tag-close')) {
+                        return;
+                    }
+                    
+                    if (e.ctrlKey || e.metaKey) {
+                        if (confirm('是否删除此标签？')) {
+                            this.remove();
+                        }
+                    }
+                });
+            }
+            
+            // 创建带关闭按钮的标签 (用于上传页面和文件标签)
+            function createTagWithClose(tagText, container, beforeElement) {
+                // 创建标签
+                const tag = document.createElement('span');
+                tag.className = 'doc-tag';
+                tag.dataset.tag = tagText;
+                tag.setAttribute('data-original-tag', tagText);
+                tag.innerHTML = tagText + '<span class="tag-close">×</span>';
+                
+                // 添加关闭按钮功能
+                const closeBtn = tag.querySelector('.tag-close');
+                closeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    tag.remove();
+                });
+                
+                // 插入到指定位置
+                if (beforeElement) {
+                    container.insertBefore(tag, beforeElement);
+                } else {
+                    container.appendChild(tag);
+                }
+                
+                return tag;
+            }
+            
+            // 全选/单选功能
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const docCheckboxes = document.querySelectorAll('.doc-checkbox:not(#selectAll)');
+            const syncToKnowledgeBtn = document.getElementById('syncToKnowledgeBtn');
+            
+            // 全选/取消全选事件
+            selectAllCheckbox.addEventListener('click', function() {
+                this.classList.toggle('checked');
+                const isChecked = this.classList.contains('checked');
+                
+                docCheckboxes.forEach(checkbox => {
+                    checkbox.classList.toggle('checked', isChecked);
+                });
+                
+                // 更新同步按钮状态
+                updateSyncButtonState();
+            });
+            
+            // 单个文档复选框事件
+            docCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('click', function() {
+                    this.classList.toggle('checked');
+                    
+                    // 更新全选框状态
+                    updateSelectAllState();
+                    
+                    // 更新同步按钮状态
+                    updateSyncButtonState();
+                });
+            });
+            
+            // 更新全选框状态
+            function updateSelectAllState() {
+                const checkedCount = document.querySelectorAll('.doc-checkbox:not(#selectAll).checked').length;
+                selectAllCheckbox.classList.toggle('checked', checkedCount === docCheckboxes.length);
+            }
+            
+            // 更新同步按钮状态
+            function updateSyncButtonState() {
+                const hasChecked = document.querySelectorAll('.doc-checkbox:not(#selectAll).checked').length > 0;
+                syncToKnowledgeBtn.disabled = !hasChecked;
+            }
+            
+            // 同步到知识库按钮事件
+            syncToKnowledgeBtn.addEventListener('click', function() {
+                const checkedRows = Array.from(document.querySelectorAll('.doc-checkbox:not(#selectAll).checked'))
+                    .map(checkbox => checkbox.closest('tr'));
+                
+                if (checkedRows.length === 0) {
+                    alert('请选择要同步的文档');
+                    return;
+                }
+                
+                // 收集选中的文档信息
+                const selectedDocs = checkedRows.map(row => {
+                    return {
+                        title: row.querySelector('.doc-title').textContent,
+                        tags: Array.from(row.querySelectorAll('.doc-tag'))
+                            .map(tag => tag.getAttribute('data-original-tag') || tag.textContent.trim())
+                    };
+                });
+                
+                // 这里添加实际的同步逻辑，例如发送API请求
+                console.log('同步到知识库的文档:', selectedDocs);
+                
+                // 显示成功消息
+                alert(`已将${selectedDocs.length}个文档同步到知识库问答`);
+                
+                // 同步完成后取消选择
+                docCheckboxes.forEach(checkbox => {
+                    checkbox.classList.remove('checked');
+                });
+                selectAllCheckbox.classList.remove('checked');
+                updateSyncButtonState();
+            });
+            
+            // 初始化更新同步按钮状态
+            updateSyncButtonState();
+            
+            // 修复已有标签上的关闭按钮
+            document.querySelectorAll('.doc-tag').forEach(tag => {
+                // 只处理还没有关闭按钮的标签
+                if (!tag.querySelector('.tag-close')) {
+                    const originalText = tag.textContent.trim();
+                    tag.setAttribute('data-original-tag', originalText);
+                    tag.innerHTML = originalText + '<span class="tag-close">×</span>';
+                    
+                    // 添加关闭按钮功能
+                    const closeBtn = tag.querySelector('.tag-close');
+                    closeBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        tag.remove();
+                        
+                        // 如果是在筛选区域，更新筛选
+                        if (tag.closest('#selectedTags')) {
+                            filterTableByTags();
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
